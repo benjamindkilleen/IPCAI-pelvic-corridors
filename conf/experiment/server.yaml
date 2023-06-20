@@ -1,0 +1,9 @@
+# @package _group_
+model: ${model}
+trainer: ${trainer}
+checkpoint: ${checkpoint}
+
+
+frame_listener: ${frame_listener}
+corridor_server: ${corridor_server}
+hololens_server: ${hololens_server}

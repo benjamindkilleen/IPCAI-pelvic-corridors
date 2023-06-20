@@ -1,0 +1,283 @@
+hydra:
+  run:
+    dir: ./results/${hydra.runtime.choices.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ./results/${hydra.runtime.choices.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}_${hydra.job.override_dirname}
+  verbose:
+    - cortical_breach_detection
+    - deepdrr
+
+defaults:
+  - _self_ # makes it so the subconfigs override the primary
+  - experiment: train
+
+  # Use the configured logging.
+  - override hydra/job_logging: rich
+
+experiment:
+  seed: 1234
+  data: ${data}
+  checkpoint: ${checkpoint}
+
+# Other experimental variables
+overwrite: False
+guide: null
+
+epochs: 100
+gpus: 1
+checkpoint: null
+download: True
+augment: True
+test_only: False
+batch_size: 64
+linearity_loss: False
+image_size: 256 # 720
+onedrive_dir: ~/datasets/OneDrive
+# xray_dir: datasets/2022-10-13_corridor-triangulation_phantom
+xray_dir: datasets/2023-01_corridor-triangulation_cadaver
+
+# Params for triangulation
+xi: -30 # Angle for preuhs algo
+use_depth: True # for debugging
+monitor: True
+left_side: True
+show_scene: False
+resync: False
+adjustment_radius: 13
+
+# RL specific things:
+local: False
+resume: False
+gamma: 0.99
+rl_checkpoint: null # for the RL agent's vision model
+record: False # record the enviroment
+
+data:
+  dataset: ${dataset}
+  batch_size: ${batch_size}
+  num_workers: 5
+  persistent_workers: True
+
+trainer:
+  devices: ${gpus}
+  accelerator: gpu
+  strategy: ddp
+  deterministic: true
+  auto_select_gpus: true
+  precision: 16
+  max_epochs: ${epochs}
+
+  # todo: gradient clipping, accumulate gradients, stochastic weight averaging
+  gradient_clip_val: 0.5
+
+dataset:
+  root: ${hydra:runtime.cwd}/datasets
+  progress_values: [-0.2, 0.2] # K-wire insertion
+  detector_distance: [200, 800] # magnification
+  num_trajectories: 25
+  generate: True
+
+  # This is really num_views per trajectory, train size is 187880
+  # Use solid angle formula to determine proportions: Omega = 2 pi (1 - cos theta)
+  # A = Omega * r^2
+  # 35 degrees subtends 1.136 si
+  # So for equally distributed views, test/train ratio should be approx
+  # 0.02104144, or about 48 to 1 for 35 degrees. With 25 sampled trajectories,
+  # this gives 1.136/1200 si/view, or 0.00094667 si/view. That is, if you think of a sphere with
+  # radius 1mm, there is about one view for every 10 cm^2 in the subtended angle, for each CT.
+  # num_views: [48, 1, 1]
+  # max_view_angle: [35, 5, 5]
+
+  # 45 degrees subtends 1.84030237 si
+  # Maintaining density of 1.136/1200 si / view, this gives 1943.98137676 views per CT, at 25 trajectories per CT means
+  # 77.75925507 views per .
+  num_views: [78, 1, 20]
+  max_view_angle: [45, 30, 30]
+
+  gaussian_contrast_aug: True
+
+  # Other parameters.
+  max_startpoint_offset: 10
+  max_endpoint_offset: 25
+  cortical_breach_threshold: 1.50
+  kwire_guide: ${guide}
+  kwire_guide_density: 0.015 # for final run with wire guide
+  image_size: ${image_size}
+  augment: ${augment}
+  test_only: ${test_only}
+  corridor_radius: 5 # maximum radius of the 3D corridor in mm.
+
+  download: ${download}
+  overwrite: ${overwrite}
+
+  device: loopx # or carm
+  loopx: ${loopx}
+  carm:
+    min_alpha: -40
+    max_alpha: 110
+    min_beta: -90
+    max_beta: 90
+    degrees: true
+
+    # 4x subsampling
+    sensor_height: 768 # 384
+    sensor_width: ${dataset.carm.sensor_height} # 768 # 384
+    pixel_size: 0.388 # 0.776
+    # source_to_isocenter_vertical_distance: 700
+
+    # Not worried about going out of bounds.
+    enforce_isocenter_bounds: False
+
+  projector: ${projector}
+
+loopx:
+  data_dir: ${hydra:runtime.cwd}/data
+  urdf_file: "loop_x.urdf"
+  head_first: true
+  supine: true
+  # - none: 2880, 2880
+  # - 2x: 1440, 1440
+  # - 4x: 720, 720
+  # - 8x: 360, 360
+  binning: 8x
+  flip_x: true
+
+projector:
+  step: 0.05
+  spectrum: "90KV_AL40"
+  photon_count: 100000
+  scatter_num: 0
+  threads: 8
+  neglog: True
+  intensity_upper_bound: 10
+  attenuate_outside_volume: True
+
+bayview:
+  root: ${dataset.root}
+  kwire_guide: ${guide}
+  kwire_guide_density: ${dataset.kwire_guide_density} # for final run with wire guide
+  image_size: ${image_size}
+
+
+robdata:
+  onedrive_dir: ${onedrive_dir}
+  specimen_groups: 
+    - "17-1882"
+    # - "17-1905"
+    # - "18-0725"
+    - "18-1109"
+    - "18-2799"
+    # - "18-2800"
+  image_size: ${image_size}
+  check_drr: False
+
+deepfluoro:
+  # h5_file_path: ${dataset.root}/DeepFluoro/ipcai_2020_full_res_data.h5
+  h5_file_path: ${dataset.root}/DeepFluoro/ipcai_2020_ds_2x.h5
+  pat_inds: [1, 2, 3, 4, 5, 6]
+  num_classes: 3 # TODO; compare hip segmentation
+  pad_img_dim: 0
+  data_aug: False
+  do_norm_01_scale: False
+  hist_reference: ${dataset.root}/CTPelvic1K/projections_084000-000300-000300-split_-10-15-trajs_WireGuide/dataset6_CLINIC_0103_left/t-0005_v-0000_nobreach.png
+  # minmax: [0,1]
+
+model:
+  optimizer:
+    lr: 0.002
+    # lr: 0.0002
+    weight_decay: 0.00001
+    momentum: 0.9
+    nesterov: True
+  scheduler:
+    step_size: 45
+    gamma: 0.1
+  kwire_guide: ${dataset.kwire_guide}
+  kwire_guide_density: ${dataset.kwire_guide_density}
+
+  # UNet specific things
+  input_channels: 1
+  output_channels: 12
+  num_layers: 5
+  features_start: 64
+
+  heatmap_loss_weight: 0.5
+  dice_loss_weight: 0.5
+  linearity_loss_weight: 5e-6
+
+  linearity_loss: ${linearity_loss}
+  linearity_loss_threshold: 0.25
+
+
+##### Server Specific Things #####
+frame_listener:
+  ip: 10.162.34.64
+  port: 13480
+
+corridor_server:
+  image_publisher:
+    port: 12350
+  pose_publisher:
+    port: 12351
+  device:
+    data_dir: ${hydra:runtime.cwd}/data
+    head_first: true
+    supine: true
+    binning: none # No binning, because using real images
+  projector:
+    step: ${projector.step}
+    spectrum: ${projector.spectrum}
+    photon_count: ${projector.photon_count}
+    scatter_num: ${projector.scatter_num}
+    threads: ${projector.threads}
+    neglog: ${projector.neglog}
+    intensity_upper_bound: 50
+    attenuate_outside_volume: False
+  onedrive_dir: ${onedrive_dir}
+  xray_dir: ${xray_dir}
+  phantom_dir: datasets/2022-07_AR-Fluoroscopy/2022-08-17_LFOV-CT
+  checkpoint: ${checkpoint}
+  model: ${model}
+  xi: ${xi}
+  image_size: ${image_size}
+  monitor: ${monitor}
+  left_side: ${left_side} # possibly flipped
+  show_scene: ${show_scene}
+  resync: ${resync}
+  adjustment_radius: ${adjustment_radius}
+
+hololens_server:
+  # ip: 10.203.77.124 # Arthrex HL
+  ip: 10.203.182.255 # CS Holo2 #1
+  port: 12347
+
+  # Radius of the tracking spheres, in mm
+  sphere_radius: 6.565 # 6.565 for the Brainlab ones, 6.0 for the smaller ones
+
+  lut_listener:
+    port: 12348
+
+  ir_tool_track:
+    tool_dir: ${hydra:runtime.cwd}/data/NdiToolDefinitions
+
+    # Must be in same order as in unity environment.
+    tool_names:
+      - brainlab_reference
+      # - pelvis_marker
+      # - blue_pointer
+      # - brainlab_pointer
+      # - loopx
+
+###### RL Specific Things ######
+env:
+  dataset: ${dataset}
+  checkpoint: ${checkpoint}
+  model: ${model}
+  train: true
+  save_images: false
+  # max_steps: 30 # Max length of episode.
+
+agent:
+  custom_model: corridor_finder
+  custom_model_config: {}

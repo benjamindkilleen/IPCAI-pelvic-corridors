@@ -1,0 +1,6 @@
+# @package _group_
+model: ${model}
+trainer: ${trainer}
+checkpoint: ${checkpoint}
+xi: ${xi}
+use_depth: ${use_depth}

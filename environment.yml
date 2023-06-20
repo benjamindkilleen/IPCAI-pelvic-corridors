@@ -1,0 +1,17 @@
+name: cortical-breach-detection
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pytorch
+  - torchvision
+  - pytorch-cuda=11.8
+  - pycuda=2022
+  - pytorch-lightning=1.6.0
+  - cudatoolkit-dev
+  - pip
+  - pip:
+      - -r requirements.txt
+      - -e .

@@ -1,0 +1,232 @@
+<!-- Note: units are in m, rad, m/s, N, N-m -->
+<!-- Force limits are all guesses at this point. do more precise calculation later -->
+<!-- Speed limits are rough estimates, except for source/detector speed which is given as 14 deg/s -->
+<!-- Note: if you use this model, the image coordinates returned will have the image flipped in X -->
+<?xml version="1.0" ?>
+  <robot name="loop_x">
+    <link name="linkmount" physical="0">
+    </link>
+    <link name="lateral" physical="0">
+      <visual>
+        <geometry>
+          <box size="0.10 0.20 0.002"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <material name="black">
+          <color rgba="0.26953125 0.26953125 0.26953125 1"/>
+        </material>
+      </visual>
+    </link>
+    <link name="longitudinal" physical="0"/>
+    <link name="traction_yaw" physical="0">
+      <visual>
+        <geometry>
+          <cylinder length="1.8" radius="0.1"/>
+        </geometry>
+        <origin xyz="0 0 0.650" rpy="0 1.57075 0" />
+        <material name="black">
+          <color rgba="0.26953125 0.26953125 0.26953125 1"/>
+        </material>
+      </visual>
+    </link>
+    <link name="leg_left" physical="0">
+      <visual>
+        <geometry>
+          <cylinder length="0.650" radius="0.1"/>
+        </geometry>
+        <origin xyz="0 0 0.342" rpy="0 0 0" />
+        <material name="black">
+          <color rgba="0.26953125 0.26953125 0.26953125 1"/>
+        </material>
+      </visual>
+    </link>
+    <link name="leg_right" physical="0">
+      <visual>
+        <geometry>
+          <cylinder length="0.650" radius="0.1"/>
+        </geometry>
+        <origin xyz="0 0 0.342" rpy="0 0 0" />
+        <material name="black">
+          <color rgba="0.26953125 0.26953125 0.26953125 1"/>
+        </material>
+      </visual>
+    </link>
+    <link name="gantry_tilt" physical="0">
+      <visual>
+        <geometry>
+          <cylinder length="0.285" radius="0.7385"/>
+        </geometry>
+        <origin xyz="0 0 0.500" rpy="1.57075 0 0" />
+        <material name="white">
+          <color rgba="0.8984375 0.8984375 0.8984375 1"/>
+        </material>
+      </visual>
+    </link>
+    <link name="isocenter" physical="0" />
+
+    <link name="source_angle" physical="0"/>
+    <link name="source" physical="0">
+      <visual>
+        <geometry>
+          <sphere radius="0.05"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <material name="blue">
+          <color rgba="0.11328125 0.1796875 0.67578125 1"/>
+        </material>
+      </visual>
+    </link>
+    <link name="source_ray" physical="0"/>
+    <link name="source_slider" physical="0">
+      <visual>
+        <geometry>
+          <cylinder length="0.04" radius="0.03"/>
+        </geometry>
+        <origin xyz="0 0 -0.02" rpy="0 0 0" />
+        <material name="blue">
+          <color rgba="0.11328125 0.1796875 0.67578125 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <link name="detector_angle" physical="0"/>
+    <link name="detector" physical="0">
+      <visual>
+        <geometry>
+          <box size="0.50 0.290 0.04"/>
+        </geometry>
+        <origin xyz="0 0 0.02" rpy="0 3.14159265 0" />
+        <material name="red">
+          <color rgba="0.95 0.1 0.1 1"/>
+        </material>
+      </visual>
+    </link> 
+    <link name="detector_ray" physical="0"/>
+    <link name="detector_slider" physical="0">
+      <visual>
+        <geometry>
+          <cylinder length="0.04" radius="0.03"/>
+        </geometry>
+        <origin xyz="0 0 0.02" rpy="0 0 0" />
+        <material name="red">
+          <color rgba="0.95 0.1 0.1 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <!-- Joints moving the gantry -->
+    <joint name="lateral_joint" type="prismatic">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="linkmount"/>
+      <child link="lateral"/>
+      <axis xyz="1 0 0"/>
+      <limit effort="1020" velocity="0.5" lower="-0.3" upper="0.3"/>
+    </joint>
+    <joint name="longitudinal_joint" type="prismatic">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="lateral"/>
+      <child link="longitudinal"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="1020" velocity="0.5" lower="-3" upper="5"/>
+    </joint>
+    <joint name="traction_yaw_joint" type="revolute">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="longitudinal"/>
+      <child link="traction_yaw"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="1020" velocity="1" lower="-0.52359878" upper="0.52359878"/>
+    </joint>
+    <joint name="leg_left_joint" type="fixed">
+      <origin xyz="-0.684 0 0" rpy="0 0 0" />
+      <parent link="traction_yaw"/>
+      <child link="leg_left"/>
+    </joint>
+    <joint name="leg_right_joint" type="fixed">
+      <origin xyz="0.684 0 0" rpy="0 0 0"/>
+      <parent link="traction_yaw"/>
+      <child link="leg_right"/>
+    </joint>
+    <joint name="gantry_tilt_joint" type="revolute">
+      <origin xyz="0 0 0.650" rpy="0 0 0"/>
+      <parent link="traction_yaw"/>
+      <child link="gantry_tilt"/>
+      <axis xyz="1 0 0"/>
+      <limit effort="1020" velocity="1" lower="-0.52359878" upper="1.04719755"/>
+    </joint>
+    <joint name="isocenter_joint" type="fixed">
+      <origin xyz="0 0.33383545 0.506" rpy="0 0 0"/>
+      <parent link="gantry_tilt"/>
+      <child link="isocenter"/>
+    </joint>
+
+    <!-- Joints moving the source -->
+    <joint name="source_angle_joint" type="revolute">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="isocenter"/>
+      <child link="source_angle"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="1020" velocity="0.244346" lower="0" upper="11.1701"/>
+    </joint>
+    <joint name="source_joint" type="fixed">
+      <!-- Based on dicom export, so pretty confident -->
+      <origin xyz="0 0 0.74709" rpy="0 3.14159265 0"/>
+      <parent link="source_angle"/>
+      <child link="source"/>
+    </joint>
+    <joint name="source_ray_joint" type="revolute">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="source"/>
+      <child link="source_ray"/>
+      <axis xyz="0 1 0"/>
+      <!-- TODO: the limits here actually matter, and are determined by the collimation. I will estimate them at 60 degrees for now -->
+      <limit effort="1020" velocity="0.17453293" lower="-0.52359878" upper="0.52359878"/>
+    </joint>
+    <joint name="source_slider_joint" type="prismatic">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="source_ray"/>
+      <child link="source_slider"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="1020" velocity="0.17453293" lower="0" upper="1.2"/>
+    </joint>
+
+    <!-- Joints moving the detector -->
+    <joint name="detector_angle_joint" type="revolute">
+      <origin xyz="0 0 0" rpy="0 0 0"/> 
+      <parent link="isocenter"/>
+      <child link="detector_angle"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="1020" velocity="0.244346" lower="-6.28318530718" upper="11.1701"/>
+    </joint>
+    <joint name="detector_joint" type="fixed">
+      <!-- Based on calibration -->
+      <origin xyz="0 0 0.500" rpy="0 0 0"/>
+      <parent link="detector_angle"/>
+      <child link="detector"/>
+    </joint>
+    <joint name="detector_ray_joint" type="revolute">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="detector"/>
+      <child link="detector_ray"/>
+      <axis xyz="0 1 0"/>
+      <!-- TODO: the limits here actually matter, and are determined by the collimation. I will estimate them at 30 degrees for now -->
+      <limit effort="1020" velocity="0.17453293" lower="-0.52359878" upper="0.52359878"/>
+    </joint>
+    <joint name="detector_slider_joint" type="prismatic">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="detector_ray"/>
+      <child link="detector_slider"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="1020" velocity="0.17453293" lower="-1.2" upper="0"/>
+    </joint>
+
+    <klampt flip_yz="0" use_vis_geom="1" freeze_robot_link="1">
+    <noselfcollision pairs="source detector"/>
+    <noselfcollision pairs="source_ray detector_ray"/>
+    <noselfcollision pairs="source_angle detector_angle"/>
+    <noselfcollision pairs="source_slider detector_slider"/>
+    <noselfcollision pairs="source source_slider"/>
+    <noselfcollision pairs="detector detector_slider"/>
+    <noselfcollision pairs="detector source_slider"/>
+    <noselfcollision pairs="source detector_slider"/>
+    </klampt>
+  </robot>

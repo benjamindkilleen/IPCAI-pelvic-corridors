@@ -1,0 +1,9 @@
+# @package _group_
+model: ${model}
+trainer: ${trainer}
+checkpoint: ${checkpoint}
+image_size: ${image_size}
+
+# data:
+#   dataset: ${deepfluoro}
+data: ${robdata}

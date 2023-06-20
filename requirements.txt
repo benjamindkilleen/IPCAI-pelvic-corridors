@@ -1,0 +1,33 @@
+torch
+torchvision
+pytorch-lightning
+hydra-core
+omegaconf
+numpy
+rich
+deepdrr
+scikit-learn
+opencv-python
+vit-pytorch
+stringcase
+h5py
+seaborn
+imgaug
+klampt
+filterpy
+zmq
+pyransac3d
+totalsegmentator
+imageio
+
+# Scripts
+autograd
+trimesh
+
+# development
+pre-commit
+black
+flake8
+pytest
+reorder-python-imports
+toml
